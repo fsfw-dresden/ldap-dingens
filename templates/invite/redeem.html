@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
 {% block body %}
-Redeem invitation with ID '{{ invite_id }}'.
+Redeem invitation with ID '{{ invite.token }}', created for {{ invite
+.created_for_mail }} by {{ invite.creator }}:
+    <form method="post" action="{{ url_for('invite_redeem',
+    invite_token=invite.token) }}">
+        {{ form.csrf_token }}
+        {{ form.first_name.label }}: {{ form.first_name }}<br>
+        {{ form.last_name.label }}: {{ form.last_name }}<br>
+        <button type="submit">Redeem!</button>
+    </form>
 {% endblock %}

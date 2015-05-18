@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
 {% block body %}
-Test 123
+Indexxx<br>
+    <a href="{{ url_for("invite_create") }}">Create invitation</a><br>
+    {% if invs %}
+        <ul>
+    {% for i in invs %}
+    <li>{{ i.creator }} / {{ i.created_for_mail }}</li>
+    {% endfor %}
+        </ul>
+    {% endif %}
 {% endblock %}

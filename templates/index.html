@@ -8,6 +8,7 @@
                 <th>Creator</th>
                 <th>Created for</th>
                 <th>Token</th>
+                <th>Status</th>
             </thead>
             {% for i in invs %}
             <tr>
@@ -15,6 +16,7 @@
                 <td>{{ i.created_for_mail }}</td>
                 <td><a href="{{ url_for('invite_redeem', invite_token=i.token)
                         }}">{{ i.token }}</a></td>
+                <td>{{ i.get_status() }}</td>
             </tr>
             {% endfor %}
         </table>

@@ -40,7 +40,14 @@ def invite_redeem(invite_token):
         if form.validate_on_submit():
             flash("Congratulations. A new LDAP user '{}' with email '{}' would "
                   "now be created.".format(
-                form.first_name.data+" "+form.last_name.data, invite_token))
+                form.first_name.data+" "+form.last_name.data,
+                i.created_for_mail))
+
+            with CommitSession() as cs:
+                # If the invitation was redeemed, set the flag
+                i.redeem()
+                cs.add(i)
+
             return redirect(url_for('index'))
         return render_template("invite/redeem.html", form=form, invite=i)
     except NoResultFound:

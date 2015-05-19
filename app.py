@@ -2,14 +2,28 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, flash, redirect, render_template, url_for
+from flask.ext.login import (
+    LoginManager, login_required, login_user, logout_user
+)
 from sqlalchemy.orm.exc import NoResultFound
+from authentication import User
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm
 from model import Invitation
 from utils import send_invitationmail
 
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.login_view = 'index'
+login_manager.login_message_category = "error"
+login_manager.init_app(app)
 app.config.from_pyfile('config.py')
+
+
+@login_manager.user_loader
+def user_loader(user_id):
+    # Dummy user creation, no real authentication
+    return User("Logged van User")
 
 
 @app.route('/')
@@ -21,6 +35,7 @@ def index():
 
 
 @app.route('/invite/create', methods=['post'])
+@login_required
 def invite_create():
     form = CreateInviteForm()
     if form.validate_on_submit():
@@ -66,6 +81,24 @@ def invite_redeem(invite_token):
     except NoResultFound:
         flash("Token '{}' not valid!".format(invite_token), "error")
     return redirect(url_for('index'))
+
+
+@app.route('/login')
+def login():
+    """Dummy function, does not yet authenticate against a valid backend
+    """
+    logged_in_user = User("Logged van User")
+    login_user(logged_in_user)
+    flash("You are now logged in as {}.".format(logged_in_user.name), "success")
+    return redirect(url_for('index'))
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash("You were logged out.")
+    return redirect(url_for('index'))
+
 
 init_db()
 s = get_session()

@@ -26,6 +26,13 @@
         {% endif %}
         {% endwith %}
 
+        {% if not current_user.is_authenticated() %}
+        <a href="{{ url_for('login') }}">Log in</a>
+        {% else %}
+        Logged in as user '{{ current_user.name }}',
+            <a href="{{ url_for('logout') }}">log out</a>.
+        {% endif %}
+
         {% block body %}{% endblock %}
         </div>
     </div>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block body %}
+    {% if current_user.is_authenticated() %}
     {% if invs %}
         <h3>Created invitations</h3>
         <table class="table table-condensed">
@@ -29,7 +30,7 @@
             <label for="{{ form.creator.name }}">
                 {{ form.creator.label}}
             </label>
-            {{ form.creator(class="form-control") }}
+            {{ form.creator(class="form-control", value=current_user.name) }}
         </div>
         <div class="form-group">
             <label for="{{ form.created_for_mail.name }}">
@@ -39,4 +40,7 @@
         </div>
         <button type="submit" class="btn btn-success">Create invitation</button>
     </form>
+    {% else %}
+        <div>Please log in to view more stuff.</div>
+    {% endif %}
 {% endblock %}

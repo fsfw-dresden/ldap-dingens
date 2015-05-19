@@ -2,19 +2,39 @@
 
 {% block body %}
     {% if invs %}
-        Created invitations:
-        <ul>
-    {% for i in invs %}
-    <li>{{ i.creator }} / {{ i.created_for_mail }} / <a href="{{ url_for
-        ('invite_redeem', invite_token=i.token) }}">{{ i.token }}</a></li>
-    {% endfor %}
-        </ul>
+        <h3>Created invitations</h3>
+        <table class="table table-condensed">
+            <thead>
+                <th>Creator</th>
+                <th>Created for</th>
+                <th>Token</th>
+            </thead>
+            {% for i in invs %}
+            <tr>
+                <td>{{ i.creator }}</td>
+                <td>{{ i.created_for_mail }}</td>
+                <td><a href="{{ url_for('invite_redeem', invite_token=i.token)
+                        }}">{{ i.token }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
     {% endif %}
 
+    <h3>Create a new invitation</h3>
     <form method="post" action="{{ url_for('invite_create') }}">
         {{ form.csrf_token }}
-        {{ form.creator.label }}: {{ form.creator }}<br>
-        {{ form.created_for_mail.label }}: {{ form.created_for_mail }}<br>
-        <button type="submit">Create invitation</button>
+        <div class="form-group">
+            <label for="{{ form.creator.name }}">
+                {{ form.creator.label}}
+            </label>
+            {{ form.creator(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.created_for_mail.name }}">
+                {{ form.created_for_mail.label}}
+            </label>
+            {{ form.created_for_mail(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-success">Create invitation</button>
     </form>
 {% endblock %}

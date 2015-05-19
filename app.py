@@ -5,6 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm
 from model import Invitation
+from utils import send_invitationmail
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -22,12 +23,23 @@ def index():
 def invite_create():
     form = CreateInviteForm()
     if form.validate_on_submit():
-        with CommitSession() as s:
-            testinv = Invitation(
+        with CommitSession() as cs:
+            new_invitation = Invitation(
                 creator=form.creator.data,
                 created_for_mail=form.created_for_mail.data
             )
-            s.add(testinv)
+            cs.add(new_invitation)
+
+        if send_invitationmail(
+                new_invitation.created_for_mail,
+                new_invitation.creator,
+                new_invitation.token):
+            flash("Invitation created and sent to {target}".format(
+                target=new_invitation.created_for_mail), "success")
+        else:
+            flash("Invitation created, but could not be sent to {"
+                  "target}!".format(target=new_invitation.created_for_mail),
+                  "error")
     return redirect(url_for('index'))
 
 

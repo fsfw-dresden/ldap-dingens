@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from random import choice
 from sqlalchemy import Column, Integer, String, Boolean
 from database import Base

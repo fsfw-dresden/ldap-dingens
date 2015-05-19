@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from flask import Flask, flash, redirect, render_template, url_for
 from sqlalchemy.orm.exc import NoResultFound

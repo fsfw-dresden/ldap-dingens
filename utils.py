@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from email.utils import formatdate
 from email.mime.text import MIMEText
 import smtplib

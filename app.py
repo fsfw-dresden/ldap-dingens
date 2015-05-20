@@ -10,7 +10,7 @@ from authentication import User
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm
 from model import Invitation
-from utils import send_invitationmail
+from utils import create_user, send_invitationmail
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -66,15 +66,21 @@ def invite_redeem(invite_token):
     try:
         i = s.query(Invitation).filter_by(token=invite_token).one()
         if form.validate_on_submit():
-            flash("Congratulations. A new LDAP user '{}' with email '{}' would "
-                  "now be created.".format(
-                form.first_name.data+" "+form.last_name.data,
-                i.created_for_mail))
+            fn = form.first_name.data
+            ln = form.last_name.data
+            ma = i.created_for_mail
 
-            with CommitSession() as cs:
-                # If the invitation was redeemed, set the flag
-                i.redeem()
-                cs.add(i)
+            if create_user(fn, ln, ma):
+                flash("New LDAP user '{}' with email '{}' was created.".format(
+                    fn + " " + ln, ma))
+
+                with CommitSession() as cs:
+                    # If the invitation was redeemed, set the flag
+                    i.redeem()
+                    cs.add(i)
+            else:
+                # TODO: LDAP exception handling
+                flash("New user could not be created!", "error")
 
             return redirect(url_for('index'))
         return render_template("invite/redeem.html", form=form, invite=i)

@@ -35,3 +35,9 @@ Follow this link to redeem your invitation:
         return True
     except IOError:
         return False
+
+
+def create_user(first, last, mail):
+    """LDAP connector
+    """
+    return True

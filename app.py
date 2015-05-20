@@ -60,6 +60,8 @@ def index():
 @app.route('/invite/create', methods=['post'])
 @login_required
 def invite_create():
+    """Invitation creation form for logged in (=existing) users.
+    """
     form = CreateInviteForm()
     if form.validate_on_submit():
         with CommitSession() as cs:
@@ -84,32 +86,47 @@ def invite_create():
 
 @app.route('/invite/redeem/<invite_token>', methods=['get', 'post'])
 def invite_redeem(invite_token):
+    """GET and POST handler for a not yet registered user who wants to redeem
+    an invitation token.
+    """
     form = RedeemForm()
     s = get_session()
+
     try:
-        i = s.query(Invitation).filter_by(token=invite_token).one()
-        if form.validate_on_submit():
-            fn = form.first_name.data
-            ln = form.last_name.data
-            ma = i.created_for_mail
-
-            if create_user(fn, ln, ma):
-                flash("New LDAP user '{}' with email '{}' was created.".format(
-                    fn + " " + ln, ma))
-
-                with CommitSession() as cs:
-                    # If the invitation was redeemed, set the flag
-                    i.redeem()
-                    cs.add(i)
-            else:
-                # TODO: LDAP exception handling
-                flash("New user could not be created!", "error")
-
-            return redirect(url_for('index'))
-        return render_template("invite/redeem.html", form=form, invite=i)
+        invitation = s.query(Invitation).filter_by(token=invite_token).one()
     except NoResultFound:
+        # No invitation with the supplied token found
         flash("Token '{}' not valid!".format(invite_token), "error")
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
+
+    if invitation.redeemed:
+        # Invitation is already redeemed, no second usage allowed
+        flash("Invitation with token '{}' is already redeemed!".format(
+            invitation.token), "error")
+        return redirect(url_for('index'))
+
+    if form.validate_on_submit():
+        # Receive POST data supplied via the form
+        fn = form.first_name.data
+        ln = form.last_name.data
+        ma = invitation.created_for_mail
+
+        if create_user(fn, ln, ma):
+            flash("New LDAP user '{}' with email '{}' was created.".format(
+                fn + " " + ln, ma), "success")
+
+            with CommitSession() as cs:
+                # If the invitation was redeemed, set the flag
+                invitation.redeem()
+                cs.add(invitation)
+        else:
+            # TODO: LDAP exception handling
+            flash("New user could not be created!", "error")
+
+        return redirect(url_for('index'))
+
+    # If the invitation was found, was not yet redeemed and its a GET, send form
+    return render_template("invite/redeem.html", form=form, invite=invitation)
 
 
 @app.route('/login')
@@ -118,7 +135,7 @@ def login():
     """
     logged_in_user = User("Logged van User")
     login_user(logged_in_user)
-    flash("You are now logged in as {}.".format(logged_in_user.name), "success")
+    flash("You are now logged in as {}.".format(logged_in_user.name))
     return redirect(url_for('index'))
 
 
@@ -130,7 +147,7 @@ def logout():
 
 
 init_db()
-s = get_session()
-s.add(Invitation("Test Admin", "mail@awf.xy"))
-s.commit()
+session = get_session()
+session.add(Invitation("Test Admin", "mail@awf.xy"))
+session.commit()
 app.run()

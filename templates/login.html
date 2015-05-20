@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block body %}
+<h3>Login</h3>
+<form method="post" action="{{ url_for('login') }}">
+  {{ form.csrf_token }}
+  <div class="form-group">
+    <label for="{{ form.username.name }}">
+      {{ form.username.label }}
+    </label>
+    {{ form.username(class="form-control") }}
+    {% if form.username.errors %}
+    <ul class="form-errors">
+      {% for error in form.username.errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  <div class="form-group">
+    <label for="{{ form.password.name }}">
+      {{ form.password.label}}
+    </label>
+    {{ form.password(class="form-control") }}
+    {% if form.password.errors %}
+    <ul class="form-errors">
+      {% for error in form.password.errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  <button type="submit" class="btn btn-success">Login</button>
+</form>
+{% endblock %}

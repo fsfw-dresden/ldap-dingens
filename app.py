@@ -31,7 +31,7 @@ from flask.ext.login import (
 from sqlalchemy.orm.exc import NoResultFound
 from authentication import User
 from database import CommitSession, init_db, get_session
-from forms import CreateInviteForm, RedeemForm
+from forms import CreateInviteForm, RedeemForm, LoginForm
 from model import Invitation, InvitationState
 from utils import create_user, send_invitationmail, create_invitation
 
@@ -127,14 +127,23 @@ def invite_redeem(invite_token):
     return render_template("invite/redeem.html", form=form, invite=invitation)
 
 
-@app.route('/login')
+@app.route('/login', methods=['get', 'post'])
 def login():
     """Dummy function, does not yet authenticate against a valid backend
     """
-    logged_in_user = User("Logged van User")
-    login_user(logged_in_user)
-    flash("You are now logged in as {}.".format(logged_in_user.name))
-    return redirect(url_for('index'))
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        # do something :)
+
+        logged_in_user = User("Logged van User")
+        login_user(logged_in_user)
+        flash("You are now logged in as {}.".format(logged_in_user.name))
+
+        return redirect(url_for('index'))
+
+    return render_template("login.html", form=form)
 
 
 @app.route('/logout')

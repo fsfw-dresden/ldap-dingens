@@ -17,7 +17,7 @@
                 <td>{{ i.created_for_mail }}</td>
                 <td><a href="{{ url_for('invite_redeem', invite_token=i.token)
                         }}">{{ i.token }}</a></td>
-                <td>{{ i.get_status() }}</td>
+                <td>{{ i.get_state().value }}</td>
             </tr>
             {% endfor %}
         </table>

@@ -32,7 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from authentication import User
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm
-from model import Invitation
+from model import Invitation, InvitationState
 from utils import create_user, send_invitationmail, create_invitation
 
 app = Flask(__name__)
@@ -96,9 +96,9 @@ def invite_redeem(invite_token):
         flash("Token '{}' not valid!".format(invite_token), "error")
         return redirect(url_for('index'))
 
-    if invitation.redeemed:
-        # Invitation is already redeemed, no second usage allowed
-        flash("Invitation with token '{}' is already redeemed!".format(
+    if invitation.get_state() != InvitationState.VALID:
+        # Invitation is already redeemed or expired
+        flash("Token '{}' not valid!".format(
             invitation.token), "error")
         return redirect(url_for('index'))
 

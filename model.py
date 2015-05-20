@@ -2,8 +2,12 @@
 import base64
 import random
 
+from enum import Enum
+from datetime import datetime, timedelta
+
 from sqlalchemy import (
-    Column, Integer, String, Boolean, UniqueConstraint
+    Column, Integer, String, Boolean, UniqueConstraint,
+    DateTime
 )
 from database import Base
 
@@ -12,7 +16,19 @@ try:
 except (ImportError, NameError):
     TOKEN_BYTES = 15
 
+try:
+    from config import TOKEN_LIFETIME
+except (ImportError, NameError):
+    TOKEN_LIFETIME = timedelta(days=7)
+
 _rng = random.SystemRandom()
+
+
+class InvitationState(Enum):
+    VALID = "Valid"
+    REDEEMED = "Redeemed"
+    EXPIRED = "Expired"
+
 
 class Invitation(Base):
     __tablename__ = "invitations"
@@ -21,25 +37,29 @@ class Invitation(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    token = Column(String)
+    token = Column(String, nullable=False)
     redeemed = Column(Boolean)
     creator = Column(String, nullable=False)
     created_for_mail = Column(String, nullable=False)
+    expires = Column(DateTime, nullable=False)
 
     def __init__(self, creator, created_for_mail):
         self.token = Invitation.create_token()
         self.redeemed = False
         self.creator = creator
         self.created_for_mail = created_for_mail
+        self.expires = datetime.utcnow() + TOKEN_LIFETIME
 
     def redeem(self):
         self.redeemed = True
 
-    def get_status(self):
+    def get_state(self):
         if self.redeemed:
-            return "Redeemed"
+            return InvitationState.REDEEMED
+        elif datetime.utcnow() > self.expires:
+            return InvitationState.EXPIRED
         else:
-            return "Not redeemed"
+            return InvitationState.VALID
 
     @staticmethod
     def create_token():

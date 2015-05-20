@@ -52,7 +52,7 @@ Follow this link to redeem your invitation:
         return False
 
 
-def create_user(first, last, mail):
+def create_user(first, last, mail, password):
     """LDAP connector
     """
     return True

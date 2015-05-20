@@ -110,8 +110,9 @@ def invite_redeem(invite_token):
         fn = form.first_name.data
         ln = form.last_name.data
         ma = invitation.created_for_mail
+        pwd = form.password.data
 
-        if create_user(fn, ln, ma):
+        if create_user(fn, ln, ma, pwd):
             flash("New LDAP user '{}' with email '{}' was created.".format(
                 fn + " " + ln, ma), "success")
 

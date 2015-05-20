@@ -7,6 +7,8 @@ import ssl
 from email.utils import formatdate
 from email.mime.text import MIMEText
 
+import ldap3
+
 import sqlalchemy.exc
 
 logger = logging.getLogger(__name__)
@@ -78,3 +80,18 @@ def create_invitation(creator, created_for_mail, *, max_attempts=10):
             logger.warn("failed to create token, %d attempts left",
                         (max_attempts-i)-1,
                         exc_info=True)
+
+
+def transfer_ldap_user(ldap_conn, user_dn):
+    if not ldap_conn.search(user_dn, "(objectClass=*)", ldap3.BASE,
+                            attributes=["cn", "uid"]):
+        # search failed, uhm
+        return None
+
+    displayname = ldap_conn.response[0]["attributes"]["cn"][0]
+    loginname = ldap_conn.response[0]["attributes"]["uid"][0]
+
+    with database.CommitSession() as cs:
+        user = model.User(loginname, displayname)
+        cs.add(user)
+    return user

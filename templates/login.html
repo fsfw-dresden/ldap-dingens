@@ -5,13 +5,13 @@
 <form method="post" action="{{ url_for('login') }}">
   {{ form.csrf_token }}
   <div class="form-group">
-    <label for="{{ form.username.name }}">
-      {{ form.username.label }}
+    <label for="{{ form.loginname.name }}">
+      {{ form.loginname.label }}
     </label>
-    {{ form.username(class="form-control") }}
-    {% if form.username.errors %}
+    {{ form.loginname(class="form-control") }}
+    {% if form.loginname.errors %}
     <ul class="form-errors">
-      {% for error in form.username.errors %}
+      {% for error in form.loginname.errors %}
       <li>{{ error }}</li>
       {% endfor %}
     </ul>

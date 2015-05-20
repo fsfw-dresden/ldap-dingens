@@ -24,16 +24,20 @@ The source code which is used to run the application at fsfw-dresden.de is
 available at https://github.com/fsfw-dresden/ldap-dingens
 """
 
+import ldap3
+
 from flask import Flask, flash, redirect, render_template, url_for
 from flask.ext.login import (
     LoginManager, login_required, login_user, logout_user
 )
 from sqlalchemy.orm.exc import NoResultFound
-from authentication import User
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm, LoginForm
-from model import Invitation, InvitationState
-from utils import create_user, send_invitationmail, create_invitation
+from model import Invitation, InvitationState, User
+from utils import (
+    create_user, send_invitationmail, create_invitation,
+    transfer_ldap_user
+)
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -42,11 +46,9 @@ login_manager.login_message_category = "error"
 login_manager.init_app(app)
 app.config.from_pyfile('config.py')
 
-
 @login_manager.user_loader
 def user_loader(user_id):
-    # Dummy user creation, no real authentication
-    return User("Logged van User")
+    return get_session().query(User).get(user_id)
 
 
 @app.route('/')
@@ -132,14 +134,31 @@ def login():
     """Dummy function, does not yet authenticate against a valid backend
     """
 
+    from config import LDAP_USER_DN_FORMAT
+
     form = LoginForm()
 
     if form.validate_on_submit():
-        # do something :)
+        # we rely on the validation of the loginname in the form to be safe
+        # from producing an invalid DN
+        user_dn = LDAP_USER_DN_FORMAT.format(loginname=form.loginname.data)
+        try:
+            conn = ldap3.Connection(ldap_server,
+                                    user=user_dn,
+                                    password=form.password.data,
+                                    raise_exceptions=True)
+            conn.bind()
+        except ldap3.LDAPInvalidCredentialsResult:
+            form.password.errors.append("Login name or password is not valid")
+            return render_template("login.html", form=form)
 
-        logged_in_user = User("Logged van User")
-        login_user(logged_in_user)
-        flash("You are now logged in as {}.".format(logged_in_user.name))
+        user = transfer_ldap_user(conn, user_dn)
+        conn.unbind()
+
+        login_user(user)
+        flash("You are now logged in as {} ({}).".format(
+            user.displayname,
+            user.loginname))
 
         return redirect(url_for('index'))
 
@@ -152,6 +171,10 @@ def logout():
     flash("You were logged out.")
     return redirect(url_for('index'))
 
+
+from config import LDAP_SERVER
+
+ldap_server = ldap3.Server(LDAP_SERVER, get_info=ldap3.ALL)
 
 init_db()
 session = get_session()

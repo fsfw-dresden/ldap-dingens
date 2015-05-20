@@ -32,8 +32,8 @@ class CreateInviteForm(Form):
 
 
 class RedeemForm(Form):
-    last_name = StringField('Last name', validators=[DataRequired()])
-    first_name = StringField('First name', validators=[DataRequired()])
+    loginname = StringField('Login name', validators=[ldap_uid])
+    displayname = StringField('Display name', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm password',
                                      validators=[DataRequired(),
@@ -41,5 +41,5 @@ class RedeemForm(Form):
 
 
 class LoginForm(Form):
-    username = StringField('User name', validators=[ldap_uid])
+    loginname = StringField('Login name', validators=[ldap_uid])
     password = PasswordField('Password', validators=[DataRequired()])

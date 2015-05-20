@@ -2,6 +2,8 @@
 import base64
 import random
 
+import flask.ext.login
+
 from enum import Enum
 from datetime import datetime, timedelta
 
@@ -20,6 +22,11 @@ try:
     from config import TOKEN_LIFETIME
 except (ImportError, NameError):
     TOKEN_LIFETIME = timedelta(days=7)
+
+try:
+    from config import LOGIN_LIFETIME
+except (ImportError, NameError):
+    LOGIN_LIFETIME = timedelta(days=2)
 
 _rng = random.SystemRandom()
 
@@ -67,3 +74,43 @@ class Invitation(Base):
         token_data = _rng.getrandbits(token_bits).to_bytes(
             TOKEN_BYTES, "little")
         return base64.urlsafe_b64encode(token_data).decode("ascii")
+
+
+class User(flask.ext.login.UserMixin, Base):
+    __tablename__ = "ldap_session_users"
+
+    auth_token = Column(String, primary_key=True)
+    loginname = Column(String, nullable=False)
+    displayname = Column(String, nullable=False)
+
+    expires = Column(DateTime, nullable=False)
+
+    def __init__(self, loginname, displayname):
+        self.auth_token = flask.ext.login.make_secure_token(
+            loginname.encode("utf-8"),
+            _rng.getrandbits(TOKEN_BYTES*8).to_bytes(TOKEN_BYTES, "little")
+        )
+        self.loginname = loginname
+        self.displayname = displayname
+        self.expires = datetime.utcnow() + LOGIN_LIFETIME
+
+    def is_active(self):
+        return datetime.utcnow() < self.expires
+
+    def is_authenticated(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.auth_token
+
+    def get_auth_token(self):
+        return self.auth_token
+
+    def __str__(self):
+        return "{} ({})".format(self.displayname, self.loginname)
+
+    def __repr__(self):
+        return "<User loginname={!r}>".format(self.loginname)

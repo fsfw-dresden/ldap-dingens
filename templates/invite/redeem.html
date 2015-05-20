@@ -6,26 +6,32 @@
     invite_token=invite.token) }}">
         {{ form.csrf_token }}
         <div class="form-group">
-            <label for="{{ form.first_name.name }}">
-                {{ form.first_name.label}}
-            </label>
-            {{ form.first_name(class="form-control") }}
-            {% if form.first_name.errors %}
-            <ul class="form-errors">
-              {% for error in form.first_name.errors %}
-              <li>{{ error }}</li>
-              {% endfor %}
-            </ul>
-            {% endif %}
+          <label for="{{ form.loginname.name }}">
+            {{ form.loginname.label }}
+          </label>
+          {{ form.loginname(class="form-control") }}
+          <p>The user name is only required for login. It is not used anywhere
+          else. It cannot be changed.</p>
+          {% if form.loginname.errors %}
+          <ul class="form-errors">
+            {% for error in form.loginname.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
         </div>
         <div class="form-group">
-            <label for="{{ form.last_name.name }}">
-                {{ form.last_name.label}}
+            <label for="{{ form.displayname.name }}">
+                {{ form.displayname.label}}
             </label>
-            {{ form.last_name(class="form-control") }}
-            {% if form.last_name.errors %}
+            {{ form.displayname(class="form-control") }}
+            <p>The display name is shown alongside of your activity. The issue
+            tracker for example uses your display name. It can be changed
+            later, and it would be nice if it was your real name, if you have
+            one.</p>
+            {% if form.displayname.errors %}
             <ul class="form-errors">
-              {% for error in form.last_name.errors %}
+              {% for error in form.displayname.errors %}
               <li>{{ error }}</li>
               {% endfor %}
             </ul>

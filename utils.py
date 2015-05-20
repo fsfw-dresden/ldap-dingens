@@ -45,11 +45,15 @@ Follow this link to redeem your invitation:
         # we have to pass the host + port to the constructor, for SSL to work
         # this might in fact be a bug in the python stdlib
         smtp = smtplib.SMTP(host=MAIL_SERVER, port=MAIL_PORT)
+        logger.debug("connected to SMTP server")
         smtp.starttls(context=ctx)
+        logger.debug("starttls successful")
         if MAIL_USER and MAIL_PASSWORD:
-            print("logged in")
+            logger.debug("login needed, logging in")
             smtp.login(MAIL_USER, MAIL_PASSWORD)
+            logger.debug("logged in")
         smtp.sendmail(INVITATION_SENDER, target, mail.as_string(0))
+        logger.debug("sent mail")
         smtp.close()
         return True
     except IOError:

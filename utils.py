@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import smtplib
 import ssl
-
-logger = logging.getLogger(__name__)
 
 from email.utils import formatdate
 from email.mime.text import MIMEText
-import smtplib
+
+logger = logging.getLogger(__name__)
+
 from config import (
     MAIL_SERVER, MAIL_PORT, MAIL_USER, MAIL_PASSWORD, MAIL_CAFILE,
     INVITATION_SENDER, INVITATION_SUBJECT, INVITATION_REDEEM_BASEURL

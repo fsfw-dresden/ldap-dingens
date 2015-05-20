@@ -33,7 +33,7 @@ from authentication import User
 from database import CommitSession, init_db, get_session
 from forms import CreateInviteForm, RedeemForm
 from model import Invitation
-from utils import create_user, send_invitationmail
+from utils import create_user, send_invitationmail, create_invitation
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -64,12 +64,9 @@ def invite_create():
     """
     form = CreateInviteForm()
     if form.validate_on_submit():
-        with CommitSession() as cs:
-            new_invitation = Invitation(
-                creator=form.creator.data,
-                created_for_mail=form.created_for_mail.data
-            )
-            cs.add(new_invitation)
+        new_invitation = create_invitation(
+            form.creator.data,
+            form.created_for_mail.data)
 
         if send_invitationmail(
                 new_invitation.created_for_mail,

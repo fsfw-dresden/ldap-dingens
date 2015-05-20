@@ -7,7 +7,12 @@ import ssl
 from email.utils import formatdate
 from email.mime.text import MIMEText
 
+import sqlalchemy.exc
+
 logger = logging.getLogger(__name__)
+
+import database
+import model
 
 from config import (
     MAIL_SERVER, MAIL_PORT, MAIL_USER, MAIL_PASSWORD, MAIL_CAFILE,
@@ -56,3 +61,16 @@ def create_user(first, last, mail, password):
     """LDAP connector
     """
     return True
+
+
+def create_invitation(creator, created_for_mail, *, max_attempts=10):
+    for i in range(max_attempts):
+        try:
+            with database.CommitSession() as cs:
+                token = model.Invitation(creator, created_for_mail)
+                cs.add(token)
+            return token
+        except sqlalchemy.exc.IntegrityError:
+            logger.warn("failed to create token, %d attempts left",
+                        (max_attempts-i)-1,
+                        exc_info=True)

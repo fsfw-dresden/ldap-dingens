@@ -1,12 +1,24 @@
 # -*- coding: utf-8 -*-
+import base64
+import random
 
-from random import choice
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import (
+    Column, Integer, String, Boolean, UniqueConstraint
+)
 from database import Base
 
+try:
+    from config import TOKEN_BYTES
+except (ImportError, NameError):
+    TOKEN_BYTES = 15
+
+_rng = random.SystemRandom()
 
 class Invitation(Base):
     __tablename__ = "invitations"
+    __table_args__ = (
+        UniqueConstraint("token"),
+    )
 
     id = Column(Integer, primary_key=True)
     token = Column(String)
@@ -31,8 +43,7 @@ class Invitation(Base):
 
     @staticmethod
     def create_token():
-        symbols = "abcdefghjklmnopqrstuvwxyz"
-        t = ""
-        for i in range(8):
-            t += symbols[choice(range(len(symbols)))]
-        return t
+        token_bits = TOKEN_BYTES * 8
+        token_data = _rng.getrandbits(token_bits).to_bytes(
+            TOKEN_BYTES, "little")
+        return base64.urlsafe_b64encode(token_data).decode("ascii")

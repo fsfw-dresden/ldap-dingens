@@ -32,6 +32,32 @@
             {% endif %}
         </div>
         <div class="form-group">
+            <label for="{{ form.password.name }}">
+                {{ form.password.label}}
+            </label>
+            {{ form.password(class="form-control") }}
+            {% if form.password.errors %}
+            <ul class="form-errors">
+              {% for error in form.password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.confirm_password.name }}">
+                {{ form.confirm_password.label}}
+            </label>
+            {{ form.confirm_password(class="form-control") }}
+            {% if form.confirm_password.errors %}
+            <ul class="form-errors">
+              {% for error in form.confirm_password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
             <label for="email">
                 E-Mail address
             </label>

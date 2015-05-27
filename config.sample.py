@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+# The config must be placed into the instance_root of the application. The path
+# of the instance_root defaults to the ``instance`` folder next to the package
+# (which is not included in the default installation).
+
 from datetime import timedelta
 
 from ldap_dingens.default_config import DefaultConfiguration

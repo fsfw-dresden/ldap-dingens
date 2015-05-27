@@ -28,15 +28,16 @@ import ldap3
 
 from flask import Flask, flash, redirect, render_template, url_for
 from flask.ext.login import (
-    LoginManager, login_required, login_user, logout_user
+    LoginManager, login_required, login_user, logout_user,
+    current_user
 )
 from sqlalchemy.orm.exc import NoResultFound
 from database import CommitSession, init_db, get_session
-from forms import CreateInviteForm, RedeemForm, LoginForm
+from forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
 from model import Invitation, InvitationState, User
 from utils import (
     create_user, send_invitationmail, create_invitation,
-    transfer_ldap_user, get_admin_ldap_conn
+    transfer_ldap_user, get_admin_ldap_conn, change_password
 )
 
 app = Flask(__name__)
@@ -57,6 +58,39 @@ def index():
     invs = s.query(Invitation).all()
     form = CreateInviteForm()
     return render_template("index.html", form=form, invs=invs)
+
+
+@app.route('/passwd', methods=["get", "post"])
+@login_required
+def passwd():
+    form = PasswdForm()
+    s = get_session()
+
+    if form.validate_on_submit():
+        from config import LDAP_USER_DN_FORMAT
+        try:
+            try:
+                conn = ldap3.Connection(ldap_server,
+                                        user=LDAP_USER_DN_FORMAT.format(
+                                            loginname=current_user.loginname),
+                                        password=form.current_password.data,
+                                        raise_exceptions=True)
+                conn.bind()
+            except ldap3.core.exceptions.LDAPInvalidCredentialsResult:
+                flash("Invalid password, please re-login", "error")
+                # force re-login
+                logout_user()
+                return redirect(url_for("index"))
+
+            change_password(conn,
+                            current_user.loginname,
+                            form.new_password.data)
+            flash("Password changed", "success")
+            return redirect(url_for("index"))
+        finally:
+            conn.unbind()
+
+    return render_template("passwd.html", form=form)
 
 
 @app.route('/invite/create', methods=['post'])

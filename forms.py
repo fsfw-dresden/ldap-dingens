@@ -43,3 +43,16 @@ class RedeemForm(Form):
 class LoginForm(Form):
     loginname = StringField('Login name', validators=[ldap_uid])
     password = PasswordField('Password', validators=[DataRequired()])
+
+
+class PasswdForm(Form):
+    current_password = PasswordField(
+        'Current password',
+        validators=[DataRequired()])
+    new_password = PasswordField(
+        'New password',
+        validators=[DataRequired()])
+    confirm_new_password = PasswordField(
+        'Confirm new password',
+        validators=[DataRequired(),
+                    SameAs("new_password")])

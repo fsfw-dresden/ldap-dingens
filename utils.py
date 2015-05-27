@@ -107,6 +107,17 @@ def create_user(admin_conn, loginname, displayname, mail, password):
         })
 
 
+def change_password(bound_conn, loginname, new_password):
+    from config import LDAP_USER_DN_FORMAT
+
+    bound_conn.modify(
+        LDAP_USER_DN_FORMAT.format(loginname=loginname),
+        {
+            "userpassword": (ldap3.MODIFY_REPLACE,
+                             [ssha_password(new_password.encode("utf-8"))])
+        })
+
+
 def create_invitation(creator, created_for_mail, *, max_attempts=10):
     for i in range(max_attempts):
         try:

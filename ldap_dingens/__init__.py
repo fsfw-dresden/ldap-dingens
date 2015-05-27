@@ -24,28 +24,30 @@ The source code which is used to run the application at fsfw-dresden.de is
 available at https://github.com/fsfw-dresden/ldap-dingens
 """
 
-import ldap3
-
 from flask import Flask, flash, redirect, render_template, url_for
 from flask.ext.login import (
     LoginManager, login_required, login_user, logout_user,
     current_user
 )
-from sqlalchemy.orm.exc import NoResultFound
-from database import CommitSession, init_db, get_session
-from forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
-from model import Invitation, InvitationState, User
-from utils import (
-    create_user, send_invitationmail, create_invitation,
-    transfer_ldap_user, get_admin_ldap_conn, change_password
-)
 
-app = Flask(__name__)
+# first, we create the app, so that it is available for all our modules
+app = Flask(__name__, instance_relative_config=True)
 login_manager = LoginManager()
 login_manager.login_view = 'index'
 login_manager.login_message_category = "error"
 login_manager.init_app(app)
-app.config.from_pyfile('config.py')
+
+import ldap3
+
+from sqlalchemy.orm.exc import NoResultFound
+from .database import CommitSession, init_db, get_session
+from .forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
+from .model import Invitation, InvitationState, User
+from .utils import (
+    create_user, send_invitationmail, create_invitation,
+    transfer_ldap_user, get_admin_ldap_conn, change_password
+)
+
 
 @login_manager.user_loader
 def user_loader(user_id):
@@ -67,14 +69,14 @@ def passwd():
     s = get_session()
 
     if form.validate_on_submit():
-        from config import LDAP_USER_DN_FORMAT
         try:
             try:
-                conn = ldap3.Connection(ldap_server,
-                                        user=LDAP_USER_DN_FORMAT.format(
-                                            loginname=current_user.loginname),
-                                        password=form.current_password.data,
-                                        raise_exceptions=True)
+                conn = ldap3.Connection(
+                    ldap_server,
+                    user=app.config["LDAP_USER_DN_FORMAT"].format(
+                        loginname=current_user.loginname),
+                    password=form.current_password.data,
+                    raise_exceptions=True)
                 conn.bind()
             except ldap3.core.exceptions.LDAPInvalidCredentialsResult:
                 flash("Invalid password, please re-login", "error")
@@ -170,15 +172,13 @@ def invite_redeem(invite_token):
 def login():
     """Dummy function, does not yet authenticate against a valid backend
     """
-
-    from config import LDAP_USER_DN_FORMAT
-
     form = LoginForm()
 
     if form.validate_on_submit():
         # we rely on the validation of the loginname in the form to be safe
         # from producing an invalid DN
-        user_dn = LDAP_USER_DN_FORMAT.format(loginname=form.loginname.data)
+        user_dn = app.config["LDAP_USER_DN_FORMAT"].format(
+            loginname=form.loginname.data)
         try:
             conn = ldap3.Connection(ldap_server,
                                     user=user_dn,
@@ -207,14 +207,3 @@ def logout():
     logout_user()
     flash("You were logged out.")
     return redirect(url_for('index'))
-
-
-from config import LDAP_SERVER
-
-ldap_server = ldap3.Server(LDAP_SERVER, get_info=ldap3.ALL)
-
-init_db()
-session = get_session()
-session.add(Invitation("Test Admin", "mail@awf.xy"))
-session.commit()
-app.run()

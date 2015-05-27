@@ -15,13 +15,9 @@ import sqlalchemy.exc
 
 logger = logging.getLogger(__name__)
 
-import database
-import model
-
-from config import (
-    MAIL_SERVER, MAIL_PORT, MAIL_USER, MAIL_PASSWORD, MAIL_CAFILE,
-    INVITATION_SENDER, INVITATION_SUBJECT, INVITATION_REDEEM_BASEURL
-)
+from . import app
+from . import database
+from . import model
 
 
 def send_invitationmail(target, invitation_creator, invitation_token):
@@ -32,31 +28,33 @@ def send_invitationmail(target, invitation_creator, invitation_token):
 Follow this link to redeem your invitation:
 {baseurl}/{token}""".format(target=target,
                             creator=invitation_creator,
-                            baseurl=INVITATION_REDEEM_BASEURL,
+                            baseurl=app.config["INVITATION_REDEEM_BASEURL"],
                             token=invitation_token)
 
     mail = MIMEText(msg, _charset='utf-8')
 
-    mail['From'] = INVITATION_SENDER
+    mail['From'] = app.config["INVITATION_SENDER"]
     mail['To'] = target
-    mail['Subject'] = INVITATION_SUBJECT
+    mail['Subject'] = app.config["INVITATION_SUBJECT"]
     mail['Date'] = formatdate(localtime=True)
 
-    ctx = ssl.create_default_context(cafile=MAIL_CAFILE)
+    ctx = ssl.create_default_context(cafile=app.config["MAIL_CAFILE"])
     ctx.verify_mode = ssl.CERT_REQUIRED
 
     try:
         # we have to pass the host + port to the constructor, for SSL to work
         # this might in fact be a bug in the python stdlib
-        smtp = smtplib.SMTP(host=MAIL_SERVER, port=MAIL_PORT)
+        smtp = smtplib.SMTP(host=app.config["MAIL_SERVER"],
+                            port=app.config["MAIL_PORT"])
         logger.debug("connected to SMTP server")
         smtp.starttls(context=ctx)
         logger.debug("starttls successful")
-        if MAIL_USER and MAIL_PASSWORD:
+        if app.config["MAIL_USER"] and app.config["MAIL_PASSWORD"]:
             logger.debug("login needed, logging in")
-            smtp.login(MAIL_USER, MAIL_PASSWORD)
+            smtp.login(app.config["MAIL_USER"],
+                       app.config["MAIL_PASSWORD"])
             logger.debug("logged in")
-        smtp.sendmail(INVITATION_SENDER, target, mail.as_string(0))
+        smtp.sendmail(app.config["INVITATION_SENDER"], target, mail.as_string(0))
         logger.debug("sent mail")
         smtp.close()
         return True
@@ -66,10 +64,9 @@ Follow this link to redeem your invitation:
 
 
 def get_admin_ldap_conn(server):
-    from config import LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD
     conn = ldap3.Connection(server,
-                            user=LDAP_ADMIN_DN,
-                            password=LDAP_ADMIN_PASSWORD,
+                            user=app.config["LDAP_ADMIN_DN"],
+                            password=app.config["LDAP_ADMIN_PASSWORD"],
                             raise_exceptions=True)
     conn.bind()
     return conn
@@ -91,11 +88,8 @@ def ssha_password(password):
 def create_user(admin_conn, loginname, displayname, mail, password):
     """LDAP connector
     """
-
-    from config import LDAP_USER_DN_FORMAT
-
     admin_conn.add(
-        LDAP_USER_DN_FORMAT.format(loginname=loginname),
+        app.config["LDAP_USER_DN_FORMAT"].format(loginname=loginname),
         ["inetOrgPerson"],
         {
             "uid": [loginname],
@@ -108,10 +102,8 @@ def create_user(admin_conn, loginname, displayname, mail, password):
 
 
 def change_password(bound_conn, loginname, new_password):
-    from config import LDAP_USER_DN_FORMAT
-
     bound_conn.modify(
-        LDAP_USER_DN_FORMAT.format(loginname=loginname),
+        app.config["LDAP_USER_DN_FORMAT"].format(loginname=loginname),
         {
             "userpassword": (ldap3.MODIFY_REPLACE,
                              [ssha_password(new_password.encode("utf-8"))])

@@ -4,7 +4,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
-from config import DEBUG
+
+from . import app
 
 
 class CommitSession(object):
@@ -26,15 +27,16 @@ def init_engine():
     like flask uses in debug mode, switch to a file based database. Means,
     if you disable debug mode, the engine creates the database only in memory.
     """
-    if DEBUG:
+    global engine
+
+    if app.config["DEBUG"]:
         db_uri = '/tmp/fsfw-inviter.db'
         if os.path.exists(db_uri):
             print("Removing existing database file at {}.".format(db_uri))
             os.remove(db_uri)
-        _engine = create_engine('sqlite:///{}'.format(db_uri), echo=False)
+        engine = create_engine('sqlite:///{}'.format(db_uri), echo=False)
     else:
-        _engine = create_engine('sqlite:///:memory:', echo=False)
-    return _engine
+        engine = create_engine('sqlite:///:memory:', echo=False)
 
 
 def init_db():
@@ -51,5 +53,4 @@ def get_session():
     return session
 
 Base = declarative_base()
-engine = init_engine()
 session = None

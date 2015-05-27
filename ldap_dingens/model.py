@@ -11,22 +11,9 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, UniqueConstraint,
     DateTime
 )
-from database import Base
+from .database import Base
 
-try:
-    from config import TOKEN_BYTES
-except (ImportError, NameError):
-    TOKEN_BYTES = 5
-
-try:
-    from config import TOKEN_LIFETIME
-except (ImportError, NameError):
-    TOKEN_LIFETIME = timedelta(days=7)
-
-try:
-    from config import LOGIN_LIFETIME
-except (ImportError, NameError):
-    LOGIN_LIFETIME = timedelta(days=2)
+from . import app
 
 _rng = random.SystemRandom()
 
@@ -55,7 +42,7 @@ class Invitation(Base):
         self.redeemed = False
         self.creator = creator
         self.created_for_mail = created_for_mail
-        self.expires = datetime.utcnow() + TOKEN_LIFETIME
+        self.expires = datetime.utcnow() + app.config["TOKEN_LIFETIME"]
 
     def redeem(self):
         self.redeemed = True
@@ -70,9 +57,10 @@ class Invitation(Base):
 
     @staticmethod
     def create_token():
-        token_bits = TOKEN_BYTES * 8
+        token_bytes = app.config["TOKEN_BYTES"]
+        token_bits = token_bytes * 8
         token_data = _rng.getrandbits(token_bits).to_bytes(
-            TOKEN_BYTES, "little")
+            token_bytes, "little")
         return base64.b32encode(token_data).decode("ascii").lower()
 
 
@@ -86,13 +74,15 @@ class User(flask.ext.login.UserMixin, Base):
     expires = Column(DateTime, nullable=False)
 
     def __init__(self, loginname, displayname):
+        token_bytes = app.config["TOKEN_BYTES"]
+        login_lifetime = app.config["LOGIN_LIFETIME"]
         self.auth_token = flask.ext.login.make_secure_token(
             loginname.encode("utf-8"),
-            _rng.getrandbits(TOKEN_BYTES*8).to_bytes(TOKEN_BYTES, "little")
+            _rng.getrandbits(token_bytes*8).to_bytes(token_bytes, "little")
         )
         self.loginname = loginname
         self.displayname = displayname
-        self.expires = datetime.utcnow() + LOGIN_LIFETIME
+        self.expires = datetime.utcnow() + login_lifetime
 
     def is_active(self):
         return datetime.utcnow() < self.expires

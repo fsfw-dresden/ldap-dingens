@@ -36,7 +36,7 @@ from forms import CreateInviteForm, RedeemForm, LoginForm
 from model import Invitation, InvitationState, User
 from utils import (
     create_user, send_invitationmail, create_invitation,
-    transfer_ldap_user
+    transfer_ldap_user, get_admin_ldap_conn
 )
 
 app = Flask(__name__)
@@ -106,24 +106,27 @@ def invite_redeem(invite_token):
 
     if form.validate_on_submit():
         # Receive POST data supplied via the form
-        fn = form.first_name.data
-        ln = form.last_name.data
-        ma = invitation.created_for_mail
-        pwd = form.password.data
 
-        if create_user(fn, ln, ma, pwd):
-            flash("New LDAP user '{}' with email '{}' was created.".format(
-                fn + " " + ln, ma), "success")
+        admin_conn = get_admin_ldap_conn(ldap_server)
+        try:
+            try:
+                create_user(admin_conn,
+                            form.loginname.data,
+                            form.displayname.data,
+                            invitation.created_for_mail,
+                            form.password.data)
+            except ldap3.core.exceptions.LDAPEntryAlreadyExistsResult:
+                flash("Login name already taken", "error")
+            else:
+                flash("New user created", "success")
+                with CommitSession() as cs:
+                    # If the invitation was redeemed, set the flag
+                    invitation.redeem()
+                    cs.add(invitation)
+                return redirect(url_for('index'))
+        finally:
+            admin_conn.unbind()
 
-            with CommitSession() as cs:
-                # If the invitation was redeemed, set the flag
-                invitation.redeem()
-                cs.add(invitation)
-        else:
-            # TODO: LDAP exception handling
-            flash("New user could not be created!", "error")
-
-        return redirect(url_for('index'))
 
     # If the invitation was found, was not yet redeemed and its a GET, send form
     return render_template("invite/redeem.html", form=form, invite=invitation)

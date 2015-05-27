@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import base64
+import hashlib
 import logging
 import smtplib
 import ssl
@@ -63,10 +65,46 @@ Follow this link to redeem your invitation:
         return False
 
 
-def create_user(first, last, mail, password):
+def get_admin_ldap_conn(server):
+    from config import LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD
+    conn = ldap3.Connection(server,
+                            user=LDAP_ADMIN_DN,
+                            password=LDAP_ADMIN_PASSWORD,
+                            raise_exceptions=True)
+    conn.bind()
+    return conn
+
+
+def ssha_password(password):
+    SALT_BYTES = 15
+
+    sha1 = hashlib.sha1()
+    salt = model._rng.getrandbits(SALT_BYTES*8).to_bytes(SALT_BYTES, "little")
+    sha1.update(password)
+    sha1.update(salt)
+
+    digest = sha1.digest()
+    passwd = b"{SSHA}" + base64.b64encode(digest + salt)
+    return passwd
+
+
+def create_user(admin_conn, loginname, displayname, mail, password):
     """LDAP connector
     """
-    return True
+
+    from config import LDAP_USER_DN_FORMAT
+
+    admin_conn.add(
+        LDAP_USER_DN_FORMAT.format(loginname=loginname),
+        ["inetOrgPerson"],
+        {
+            "uid": [loginname],
+            "cn": [displayname],
+            "sn": ["XXX"],
+            "givenName": ["XXX"],
+            "mail": [mail],
+            "userpassword": [ssha_password(password.encode("utf-8"))]
+        })
 
 
 def create_invitation(creator, created_for_mail, *, max_attempts=10):

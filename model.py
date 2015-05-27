@@ -16,7 +16,7 @@ from database import Base
 try:
     from config import TOKEN_BYTES
 except (ImportError, NameError):
-    TOKEN_BYTES = 15
+    TOKEN_BYTES = 5
 
 try:
     from config import TOKEN_LIFETIME
@@ -73,7 +73,7 @@ class Invitation(Base):
         token_bits = TOKEN_BYTES * 8
         token_data = _rng.getrandbits(token_bits).to_bytes(
             TOKEN_BYTES, "little")
-        return base64.urlsafe_b64encode(token_data).decode("ascii")
+        return base64.b32encode(token_data).decode("ascii").lower()
 
 
 class User(flask.ext.login.UserMixin, Base):

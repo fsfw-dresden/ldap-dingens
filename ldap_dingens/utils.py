@@ -21,6 +21,15 @@ from . import model
 
 
 def send_invitationmail(target, invitation_creator, invitation_token):
+    """
+    Send an invitation email to the *target* mail adress, quoting the
+    *invitation_creator* (full name) and referring to the *invitation_token*.
+
+    Return :data:`True` if the mail was submitted to the server successfully,
+    :data:`False` otherwise. Note that mere submission to the MTA is not a
+    reliable way to ensure that the mail has actually been sent correctly.
+    """
+
     msg = """Hello {target},
 
 {creator} invited you to create an account in FSFW LDAP!
@@ -63,6 +72,14 @@ Follow this link to redeem your invitation:
         return False
 
 def create_invitation(creator, created_for_mail, *, max_attempts=10):
+    """
+    Create a new invitation token. No mail is sent (see
+    :func:`send_invitationmail`).
+
+    As the token is generated randomly, there may be collisions. At most
+    *max_attempts* will be made. If all attempts fail, :data:`None` is
+    returned.
+    """
     for i in range(max_attempts):
         try:
             with database.CommitSession() as cs:
@@ -76,6 +93,9 @@ def create_invitation(creator, created_for_mail, *, max_attempts=10):
 
 
 def transfer_ldap_user(ldap_conn, user_dn):
+    """
+    Transfer an LDAP user to the web frontend user database.
+    """
     if not ldap_conn.search(user_dn, "(objectClass=*)", ldap3.BASE,
                             attributes=["cn", "uid"]):
         # search failed, uhm

@@ -27,7 +27,7 @@ available at https://github.com/fsfw-dresden/ldap-dingens
 from flask import Flask, flash, redirect, render_template, url_for
 from flask.ext.login import (
     LoginManager, login_required, login_user, logout_user,
-    current_user
+    current_user, user_logged_out
 )
 
 # first, we create the app, so that it is available for all our modules
@@ -42,7 +42,7 @@ import ldap3
 from sqlalchemy.orm.exc import NoResultFound
 from .database import CommitSession, init_db, get_session
 from .forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
-from .model import Invitation, InvitationState, User
+from .model import Invitation, InvitationState, User, clean_stale_users
 from .utils import (
     send_invitationmail, create_invitation, transfer_ldap_user
 )
@@ -52,7 +52,12 @@ from . import ldap
 
 @login_manager.user_loader
 def user_loader(user_id):
-    return get_session().query(User).get(user_id)
+    user = get_session().query(User).get(user_id)
+    if not user.is_active():
+        with CommitSession() as cs:
+            cs.delete(user)
+        return None
+    return user
 
 
 @app.route('/')
@@ -197,6 +202,22 @@ def login():
 
 @app.route('/logout')
 def logout():
+    # XXX: I have no idea why exactly, but if we do that before logout_user,
+    # the logout actually works correctly (otherwise, e.g. the signal does not
+    # fire)
+    repr(current_user)
     logout_user()
     flash("You were logged out.")
     return redirect(url_for('index'))
+
+
+@user_logged_out.connect_via(app)
+def handle_user_logged_out(app, user):
+    """
+    This is bound to the user_logged_out signal of the login manager. We use
+    this to clean up the current users session, and while we are at it, clean
+    all stale sessions too.
+    """
+    with CommitSession() as cs:
+        cs.delete(user)
+    clean_stale_users()

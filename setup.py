@@ -23,7 +23,8 @@ setup(
         "MarkupSafe>=0.23",
         "SQLAlchemy>=0.9.9",
         "Werkzeug>=0.9.6",
-        "WTForms>=2.0"
+        "WTForms>=2.0",
+        "blinker>=1.3"
     ],
     packages=["ldap_dingens"],
     package_data={

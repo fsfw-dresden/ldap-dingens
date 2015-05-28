@@ -11,7 +11,7 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, UniqueConstraint,
     DateTime
 )
-from .database import Base
+from .database import Base, CommitSession
 
 from . import app
 
@@ -104,3 +104,11 @@ class User(flask.ext.login.UserMixin, Base):
 
     def __repr__(self):
         return "<User loginname={!r}>".format(self.loginname)
+
+
+def clean_stale_users():
+    """
+    Purge expired sessions from the database.
+    """
+    with CommitSession() as cs:
+        cs.query(User).filter(User.expires < datetime.utcnow()).delete()

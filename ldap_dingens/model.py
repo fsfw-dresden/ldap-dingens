@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import base64
+import logging
 import random
 
 import flask.ext.login
@@ -16,6 +17,8 @@ from .database import Base, CommitSession
 from . import app
 
 _rng = random.SystemRandom()
+
+logger = logging.getLogger(__name__)
 
 
 class InvitationState(Enum):
@@ -111,4 +114,7 @@ def clean_stale_users():
     Purge expired sessions from the database.
     """
     with CommitSession() as cs:
-        cs.query(User).filter(User.expires < datetime.utcnow()).delete()
+        hits = cs.query(User).filter(
+            User.expires < datetime.utcnow()
+        ).delete()
+    logger.debug("removed %d stale user sessions", hits)

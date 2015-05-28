@@ -3,6 +3,7 @@ import sys
 
 from ldap_dingens import app, get_session, init_db, Invitation
 from ldap_dingens.database import init_engine
+from ldap_dingens.ldap import init_ldap
 
 sys.path.insert(0, app.instance_path)
 try:
@@ -12,10 +13,7 @@ finally:
 
 app.config.from_object(config.Configuration)
 
-# XXX: this will be fixed later...
-import ldap_dingens
-ldap_dingens.ldap_server = ldap3.Server(app.config["LDAP_SERVER"])
-
+init_ldap()
 init_engine()
 init_db()
 session = get_session()

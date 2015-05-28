@@ -44,9 +44,10 @@ from .database import CommitSession, init_db, get_session
 from .forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
 from .model import Invitation, InvitationState, User
 from .utils import (
-    create_user, send_invitationmail, create_invitation,
-    transfer_ldap_user, get_admin_ldap_conn, change_password
+    send_invitationmail, create_invitation, transfer_ldap_user
 )
+
+from . import ldap
 
 
 @login_manager.user_loader
@@ -71,8 +72,7 @@ def passwd():
     if form.validate_on_submit():
         try:
             try:
-                conn = ldap3.Connection(
-                    ldap_server,
+                conn = ldap.get_conn(
                     user=app.config["LDAP_USER_DN_FORMAT"].format(
                         loginname=current_user.loginname),
                     password=form.current_password.data,
@@ -84,9 +84,8 @@ def passwd():
                 logout_user()
                 return redirect(url_for("index"))
 
-            change_password(conn,
-                            current_user.loginname,
-                            form.new_password.data)
+            ldap.change_password(conn,
+                                 form.new_password.data)
             flash("Password changed", "success")
             return redirect(url_for("index"))
         finally:
@@ -143,25 +142,20 @@ def invite_redeem(invite_token):
     if form.validate_on_submit():
         # Receive POST data supplied via the form
 
-        admin_conn = get_admin_ldap_conn(ldap_server)
         try:
-            try:
-                create_user(admin_conn,
-                            form.loginname.data,
-                            form.displayname.data,
-                            invitation.created_for_mail,
-                            form.password.data)
-            except ldap3.core.exceptions.LDAPEntryAlreadyExistsResult:
-                flash("Login name already taken", "error")
-            else:
-                flash("New user created", "success")
-                with CommitSession() as cs:
-                    # If the invitation was redeemed, set the flag
-                    invitation.redeem()
-                    cs.add(invitation)
-                return redirect(url_for('index'))
-        finally:
-            admin_conn.unbind()
+            ldap.create_user(form.loginname.data,
+                             form.displayname.data,
+                             invitation.created_for_mail,
+                             form.password.data)
+        except ldap3.core.exceptions.LDAPEntryAlreadyExistsResult:
+            flash("Login name already taken", "error")
+        else:
+            flash("New user created", "success")
+            with CommitSession() as cs:
+                # If the invitation was redeemed, set the flag
+                invitation.redeem()
+                cs.add(invitation)
+            return redirect(url_for('index'))
 
 
     # If the invitation was found, was not yet redeemed and its a GET, send form
@@ -180,10 +174,9 @@ def login():
         user_dn = app.config["LDAP_USER_DN_FORMAT"].format(
             loginname=form.loginname.data)
         try:
-            conn = ldap3.Connection(ldap_server,
-                                    user=user_dn,
-                                    password=form.password.data,
-                                    raise_exceptions=True)
+            conn = ldap.get_conn(user=user_dn,
+                                 password=form.password.data,
+                                 raise_exceptions=True)
             conn.bind()
         except ldap3.LDAPInvalidCredentialsResult:
             form.password.errors.append("Login name or password is not valid")

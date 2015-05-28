@@ -62,54 +62,6 @@ Follow this link to redeem your invitation:
         logger.exception("failed to send mail")
         return False
 
-
-def get_admin_ldap_conn(server):
-    conn = ldap3.Connection(server,
-                            user=app.config["LDAP_ADMIN_DN"],
-                            password=app.config["LDAP_ADMIN_PASSWORD"],
-                            raise_exceptions=True)
-    conn.bind()
-    return conn
-
-
-def ssha_password(password):
-    SALT_BYTES = 15
-
-    sha1 = hashlib.sha1()
-    salt = model._rng.getrandbits(SALT_BYTES*8).to_bytes(SALT_BYTES, "little")
-    sha1.update(password)
-    sha1.update(salt)
-
-    digest = sha1.digest()
-    passwd = b"{SSHA}" + base64.b64encode(digest + salt)
-    return passwd
-
-
-def create_user(admin_conn, loginname, displayname, mail, password):
-    """LDAP connector
-    """
-    admin_conn.add(
-        app.config["LDAP_USER_DN_FORMAT"].format(loginname=loginname),
-        ["inetOrgPerson"],
-        {
-            "uid": [loginname],
-            "cn": [displayname],
-            "sn": ["XXX"],
-            "givenName": ["XXX"],
-            "mail": [mail],
-            "userpassword": [ssha_password(password.encode("utf-8"))]
-        })
-
-
-def change_password(bound_conn, loginname, new_password):
-    bound_conn.modify(
-        app.config["LDAP_USER_DN_FORMAT"].format(loginname=loginname),
-        {
-            "userpassword": (ldap3.MODIFY_REPLACE,
-                             [ssha_password(new_password.encode("utf-8"))])
-        })
-
-
 def create_invitation(creator, created_for_mail, *, max_attempts=10):
     for i in range(max_attempts):
         try:

@@ -17,3 +17,4 @@ class DefaultConfiguration:
     LOGIN_LIFETIME = timedelta(days=2)
 
     LDAP_SERVER = "localhost"
+    LDAP_PORT = 389

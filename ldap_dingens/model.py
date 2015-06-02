@@ -8,10 +8,8 @@ import flask.ext.login
 from enum import Enum
 from datetime import datetime, timedelta
 
-from sqlalchemy import (
-    Column, Integer, String, Boolean, UniqueConstraint,
-    DateTime
-)
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+
 from .database import Base, CommitSession
 
 from . import app
@@ -29,12 +27,9 @@ class InvitationState(Enum):
 
 class Invitation(Base):
     __tablename__ = "invitations"
-    __table_args__ = (
-        UniqueConstraint("token"),
-    )
 
     id = Column(Integer, primary_key=True)
-    token = Column(String, nullable=False)
+    token = Column(String, nullable=False, unique=True)
     redeemed = Column(Boolean)
     creator = Column(String, nullable=False)
     created_for_mail = Column(String, nullable=False)

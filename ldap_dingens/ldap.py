@@ -14,7 +14,8 @@ def init_ldap():
     """
     global server
 
-    server = ldap3.Server(app.config["LDAP_SERVER"])
+    server = ldap3.Server(app.config["LDAP_SERVER"],
+                          port=app.config["LDAP_PORT"])
 
 
 def get_admin_conn():
@@ -109,3 +110,20 @@ def change_password(bound_conn, new_password):
             "userpassword": (ldap3.MODIFY_REPLACE,
                              [ssha_password(new_password.encode("utf-8"))])
         })
+
+
+def get_group_members(groupname='Account'):
+    """Get all inetOrgPerson objects from a UO.
+    The requested attributes are also defined here.
+    """
+    conn = get_admin_conn()
+    od = ldap3.ObjectDef('inetOrgPerson')
+    for x in ['cn', 'uid', 'mail']:
+        od.add(x)
+
+    r = ldap3.Reader(conn, od,
+                 '(objectClass=inetOrgPerson)',
+                 app.config['LDAP_GROUP_BASE'].format(
+                     groupname=groupname))
+
+    return [m.entry_get_attributes_dict() for m in r.search()]

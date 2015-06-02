@@ -42,6 +42,7 @@ import ldap3
 from sqlalchemy.orm.exc import NoResultFound
 from .database import CommitSession, init_db, get_session
 from .forms import CreateInviteForm, RedeemForm, LoginForm, PasswdForm
+from .ldap import get_group_members
 from .model import Invitation, InvitationState, User, clean_stale_users
 from .utils import (
     send_invitationmail, create_invitation, transfer_ldap_user
@@ -65,7 +66,8 @@ def index():
     s = get_session()
     invs = s.query(Invitation).all()
     form = CreateInviteForm()
-    return render_template("index.html", form=form, invs=invs)
+    members = get_group_members('Account')
+    return render_template("index.html", form=form, invs=invs, members=members)
 
 
 @app.route('/passwd', methods=["get", "post"])

@@ -45,13 +45,11 @@
     <table class="table table-condensed">
         <thead>
             <th>Real name</th>
-            <th>Email</th>
             <th>UID</th>
         </thead>
         {% for member in members %}
             <tr>
                 <td>{{ member.get('cn')[0] }}</td>
-                <td>{{ member.mail[0] }}</td>
                 <td>{{ member.uid[0] }}</td>
             </tr>
         {% endfor %}

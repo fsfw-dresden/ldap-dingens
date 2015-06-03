@@ -36,7 +36,9 @@ def init_engine():
             os.remove(db_uri)
         engine = create_engine('sqlite:///{}'.format(db_uri), echo=False)
     else:
-        engine = create_engine('sqlite:///:memory:', echo=False)
+        engine = create_engine(
+            app.config["TOKEN_DATABASE_URI"],
+            echo=False)
 
 
 def init_db():

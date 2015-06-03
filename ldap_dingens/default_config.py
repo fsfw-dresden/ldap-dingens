@@ -9,6 +9,8 @@ class DefaultConfiguration:
     MAIL_PASSWORD = None
     MAIL_CAFILE = None
 
+    TOKEN_DATABASE_URI = "sqlite:///:memory:"
+
     INVITATION_SUBJECT = "Invitation to join the FSFW!"
 
     TOKEN_BYTES = 5

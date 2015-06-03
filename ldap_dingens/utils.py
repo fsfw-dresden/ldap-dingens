@@ -56,8 +56,8 @@ Follow this link to redeem your invitation:
         smtp = smtplib.SMTP(
             host=app.config.get(
                 "MAIL_SERVER_HOSTNAME",
-                app.config["MAIL_HOST"]))
-        smtp.connect(app.config["MAIL_HOST"], app.config["MAIL_PORT"])
+                app.config["MAIL_SERVER"]))
+        smtp.connect(app.config["MAIL_SERVER"], app.config["MAIL_PORT"])
         logger.debug("connected to SMTP server")
         smtp.starttls(context=ctx)
         logger.debug("starttls successful")

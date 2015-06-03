@@ -53,8 +53,11 @@ Follow this link to redeem your invitation:
     try:
         # we have to pass the host + port to the constructor, for SSL to work
         # this might in fact be a bug in the python stdlib
-        smtp = smtplib.SMTP(host=app.config["MAIL_SERVER"],
-                            port=app.config["MAIL_PORT"])
+        smtp = smtplib.SMTP(
+            host=app.config.get(
+                "MAIL_SERVER_HOSTNAME",
+                app.config["MAIL_HOST"]))
+        smtp.connect(app.config["MAIL_HOST"], app.config["MAIL_PORT"])
         logger.debug("connected to SMTP server")
         smtp.starttls(context=ctx)
         logger.debug("starttls successful")

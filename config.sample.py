@@ -19,6 +19,9 @@ class Configuration(DefaultConfiguration):
     #: Host at which to reach your mail server (MTA)
     # MAIL_SERVER = "localhost"
 
+    #: Hostname to use for SSL verification purposes
+    # MAIL_SERVER_HOSTNAME = MAIL_SERVER
+
     #: Port at which your MTA listens
     # MAIL_PORT = 25
 

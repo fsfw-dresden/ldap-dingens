@@ -24,7 +24,9 @@ setup(
         "SQLAlchemy>=0.9.9",
         "Werkzeug>=0.9.6",
         "WTForms>=2.0",
-        "blinker>=1.3"
+        "blinker>=1.3",
+        "enum34>=1.0",
+        "ldap3>=0.9.7.1"
     ],
     packages=["ldap_dingens"],
     package_data={

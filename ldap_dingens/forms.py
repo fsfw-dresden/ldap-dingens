@@ -25,9 +25,7 @@ def ldap_uid(form, field):
 
 
 class CreateInviteForm(Form):
-    # TODO: login name should replace the creator field
-    creator = StringField('Creator')
-    created_for_mail = StringField('Create for email',
+    created_for_mail = StringField('E-mail',
                                    validators=[DataRequired()])
 
 

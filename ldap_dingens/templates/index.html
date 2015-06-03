@@ -2,6 +2,19 @@
 
 {% block body %}
     {% if current_user.is_authenticated() %}
+    <h3>Create a new invitation</h3>
+    <form method="post" action="{{ url_for('invite_create') }}">
+        {{ form.csrf_token }}
+        <div class="form-group">
+            {{ form.created_for_mail.label}}
+            {{ form.created_for_mail(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-success">
+            Create and send invitation
+        </button>
+    </form>
+
+
     {% if invs %}
         <h3>Created invitations</h3>
         <table class="table table-condensed">
@@ -23,23 +36,6 @@
         </table>
     {% endif %}
 
-    <h3>Create a new invitation</h3>
-    <form method="post" action="{{ url_for('invite_create') }}">
-        {{ form.csrf_token }}
-        <div class="form-group">
-            <label for="{{ form.creator.name }}">
-                {{ form.creator.label}}
-            </label>
-            {{ form.creator(class="form-control", value=current_user.name) }}
-        </div>
-        <div class="form-group">
-            <label for="{{ form.created_for_mail.name }}">
-                {{ form.created_for_mail.label}}
-            </label>
-            {{ form.created_for_mail(class="form-control") }}
-        </div>
-        <button type="submit" class="btn btn-success">Create invitation</button>
-    </form>
 
     <h3>Accounts in LDAP</h3>
     <table class="table table-condensed">

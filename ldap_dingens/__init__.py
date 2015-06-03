@@ -109,7 +109,7 @@ def invite_create():
     form = CreateInviteForm()
     if form.validate_on_submit():
         new_invitation = create_invitation(
-            form.creator.data,
+            current_user.displayname,
             form.created_for_mail.data)
 
         if send_invitationmail(

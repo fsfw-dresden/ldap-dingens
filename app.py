@@ -16,7 +16,7 @@ app.config.from_object(config.Configuration)
 init_ldap()
 init_engine()
 init_db()
-if app.DEBUG:
+if app.config["DEBUG"]:
     # only create test invitation in debug mode
     session = get_session()
     session.add(Invitation("Test Admin", "mail@awf.xy"))

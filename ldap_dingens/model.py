@@ -82,12 +82,15 @@ class User(flask.ext.login.UserMixin, Base):
         self.displayname = displayname
         self.expires = datetime.utcnow() + login_lifetime
 
+    @property
     def is_active(self):
         return datetime.utcnow() < self.expires
 
+    @property
     def is_authenticated(self):
         return True
 
+    @property
     def is_anonymous(self):
         return False
 

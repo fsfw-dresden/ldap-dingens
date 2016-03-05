@@ -16,7 +16,7 @@ setup(
     keywords="ldap web-frontend flask",
     install_requires=[
         "Flask>=0.10.1",
-        "Flask-Login>=0.2.11",
+        "Flask-Login>=0.3.0",
         "Flask-WTF>=0.10",
         "itsdangerous>=0.24",
         "Jinja2>=2.7.3",

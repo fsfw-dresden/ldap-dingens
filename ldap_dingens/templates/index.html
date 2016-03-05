@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block body %}
-    {% if current_user.is_authenticated() %}
+    {% if current_user.is_authenticated %}
     <h3>Create a new invitation</h3>
     <form method="post" action="{{ url_for('invite_create') }}">
         {{ form.csrf_token }}

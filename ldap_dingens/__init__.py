@@ -54,7 +54,7 @@ from . import ldap
 @login_manager.user_loader
 def user_loader(user_id):
     user = get_session().query(User).get(user_id)
-    if user and not user.is_active():
+    if user and not user.is_active:
         with CommitSession() as cs:
             cs.delete(user)
         return None
